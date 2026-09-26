@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="gpx-preview tests" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>Alpine Loop</name>
+    <desc>Two-day ride around the lake.
+Dates: 2026-06-01 to 2026-06-02
+Notes: windy on day two</desc>
+    <link href="https://example.com/tours/alpine-loop"><text>Tour page</text></link>
+    <time>2026-06-01T07:00:00Z</time>
+    <keywords>bike, planned done</keywords>
+  </metadata>
+  <trk>
+    <name>Day 1</name>
+    <trkseg>
+      <trkpt lat="47.0000" lon="8.0000"><ele>400</ele><time>2026-06-01T07:00:00Z</time></trkpt>
+      <trkpt lat="47.0100" lon="8.0100"><ele>420</ele><time>2026-06-01T07:10:00Z</time></trkpt>
+      <trkpt lat="47.0200" lon="8.0200"><ele>415</ele><time>2026-06-01T07:20:00Z</time></trkpt>
+    </trkseg>
+    <trkseg>
+      <trkpt lat="47.0500" lon="8.0500"><ele>500</ele><time>2026-06-01T08:00:00Z</time></trkpt>
+      <trkpt lat="47.0600" lon="8.0600"><ele>510</ele><time>2026-06-01T08:10:00Z</time></trkpt>
+    </trkseg>
+  </trk>
+  <trk>
+    <name>Day 2</name>
+    <trkseg>
+      <trkpt lat="47.0600" lon="8.0600"><ele>510</ele><time>2026-06-02T07:00:00Z</time></trkpt>
+      <trkpt lat="47.0700" lon="8.0400"><ele>530</ele><time>2026-06-02T07:30:00Z</time></trkpt>
+    </trkseg>
+    <trkseg>
+      <trkpt lat="47.0800" lon="8.0200"><ele>540</ele><time>2026-06-02T08:00:00.500Z</time></trkpt>
+      <trkpt lat="47.0900" lon="8.0000"><ele>520</ele><time>2026-06-02T09:00:00Z</time></trkpt>
+    </trkseg>
+  </trk>
+</gpx>

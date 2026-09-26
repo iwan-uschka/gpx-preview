@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="t" xmlns="http://www.topografix.com/GPX/1/1"
+     xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1">
+  <metadata>
+    <name>With Extensions</name>
+    <extensions><name>Not the title</name><desc>Not the desc</desc></extensions>
+  </metadata>
+  <extensions>
+    <trk><trkseg><trkpt lat="80.0" lon="80.0"/></trkseg></trk>
+  </extensions>
+  <trk>
+    <extensions><name>Not a track name</name></extensions>
+    <trkseg>
+      <trkpt lat="1.0" lon="1.0">
+        <ele>10</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension><gpxtpx:hr>140</gpxtpx:hr><ele>9999</ele></gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="1.1" lon="1.1"><ele>12</ele></trkpt>
+    </trkseg>
+  </trk>
+</gpx>

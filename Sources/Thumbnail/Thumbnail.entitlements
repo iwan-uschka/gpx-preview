@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Deliberately NO network entitlement, permanently: Finder requests
+         thumbnails in bulk and caches them on disk, which conflicts with
+         Apple's MapKit terms on bulk downloading and caching map data, and
+         map attribution cannot stay legible at icon sizes. -->
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+    <key>com.apple.security.files.user-selected.read-only</key>
+    <true/>
+</dict>
+</plist>

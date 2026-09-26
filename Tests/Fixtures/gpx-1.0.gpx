@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.0" creator="t" xmlns="http://www.topografix.com/GPX/1/0">
+  <name>Old Format Walk</name>
+  <desc>Written by a GPX 1.0 tool.</desc>
+  <url>https://example.com/old</url>
+  <keywords>walk,city, walk</keywords>
+  <trk>
+    <name>Walk</name>
+    <trkseg>
+      <trkpt lat="48.1000" lon="11.5000"><ele>520</ele></trkpt>
+      <trkpt lat="48.1010" lon="11.5010"><ele>522</ele></trkpt>
+    </trkseg>
+  </trk>
+</gpx>
