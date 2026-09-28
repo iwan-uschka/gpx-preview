@@ -42,9 +42,9 @@ final class PreviewLayoutTests: XCTestCase {
     func testDescriptionCappedAtTwelveLines() {
         var doc = GPXDocument()
         doc.desc = (1...40).map { "line \($0)" }.joined(separator: "\n")
-        let capped = PreviewLayout.contentSize(for: doc, diagnostic: nil).height
+        let capped = PreviewLayout.contentSize(for: doc).height
         doc.desc = (1...12).map { "line \($0)" }.joined(separator: "\n")
-        let twelve = PreviewLayout.contentSize(for: doc, diagnostic: nil).height
+        let twelve = PreviewLayout.contentSize(for: doc).height
         XCTAssertEqual(capped, twelve)
         let lines = TextDrawing.wrap((1...40).map { "l\($0)" }.joined(separator: "\n"),
                                      width: 500, font: TextDrawing.font(size: 13), maxLines: 12)
@@ -55,19 +55,5 @@ final class PreviewLayoutTests: XCTestCase {
     func testErrorTextNamesLine() {
         XCTAssertEqual(PreviewLayout.errorText(GPXError.malformedXML(line: 12, column: 4)),
                        "Couldn't read GPX: malformed XML at line 12, column 4")
-    }
-
-    func testImageBlanknessHeuristic() {
-        let uniform = RenderSmokeTests.bitmap(CGSize(width: 64, height: 64))
-        uniform.setFillColor(CGColor(gray: 0.9, alpha: 1))
-        uniform.fill(CGRect(x: 0, y: 0, width: 64, height: 64))
-        XCTAssertTrue(ImageStats.isBlank(uniform.makeImage()!))
-
-        let busy = RenderSmokeTests.bitmap(CGSize(width: 64, height: 64))
-        busy.setFillColor(CGColor(gray: 0.9, alpha: 1))
-        busy.fill(CGRect(x: 0, y: 0, width: 64, height: 64))
-        busy.setFillColor(CGColor(srgbRed: 0.2, green: 0.5, blue: 0.9, alpha: 1))
-        busy.fill(CGRect(x: 0, y: 0, width: 32, height: 64))
-        XCTAssertFalse(ImageStats.isBlank(busy.makeImage()!))
     }
 }

@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Install the built "GPX Preview.app" to /Applications and register its
+# Install the built "GPXPreview.app" to /Applications and register its
 # Quick Look preview and thumbnail extensions. Reverse with uninstall.sh.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-APP="$ROOT/build/DerivedData/Build/Products/Release/GPX Preview.app"
-DEST="/Applications/GPX Preview.app"
+APP="$ROOT/build/DerivedData/Build/Products/Release/GPXPreview.app"
+DEST="/Applications/GPXPreview.app"
 LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
 
 [ -d "$APP" ] || { echo "error: not built yet. Run: scripts/build.sh" >&2; exit 1; }
@@ -13,8 +13,8 @@ codesign --verify --deep --strict "$APP" || {
   echo "error: signature invalid at $APP; rebuild with scripts/build.sh" >&2; exit 1; }
 
 echo "── Quitting any running copy ──"
-osascript -e 'quit app "GPX Preview"' >/dev/null 2>&1 || true
-killall "GPX Preview" GPXQuickLook GPXThumbnail >/dev/null 2>&1 || true
+osascript -e 'quit app "GPXPreview"' >/dev/null 2>&1 || true
+killall "GPXPreview" GPXQuickLook GPXThumbnail >/dev/null 2>&1 || true
 # Forget the build-tree copy so the system can't pick its extensions instead.
 "$LSREGISTER" -u "$APP" >/dev/null 2>&1 || true
 

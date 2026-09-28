@@ -108,9 +108,9 @@ final class GPXLimitsTests: XCTestCase {
 
         let start = ContinuousClock.now
         let doc = try GPXParser.parse(data: data, limits: .preview)
-        let size = PreviewLayout.contentSize(for: doc, diagnostic: "Map probe: OK")
+        let size = PreviewLayout.contentSize(for: doc)
         let ctx = RenderSmokeTests.bitmap(size)
-        PreviewLayout.draw(doc, diagnostic: "Map probe: OK", in: ctx, size: size)
+        PreviewLayout.draw(doc, in: ctx, size: size)
         let elapsed = ContinuousClock.now - start
         XCTAssertEqual(doc.pointCount, 10_000)
         XCTAssertLessThan(elapsed, .seconds(1), "took \(elapsed)")

@@ -88,19 +88,19 @@ final class RenderSmokeTests: XCTestCase {
 
     func testPreviewLayoutDrawsWithoutCrashing() throws {
         let doc = try GPXParser.parse(url: GPXParserTests.fixture("full-1.1.gpx"), limits: .preview)
-        let size = PreviewLayout.contentSize(for: doc, diagnostic: "Map probe: OK 0.8s 1600×1040")
+        let size = PreviewLayout.contentSize(for: doc)
         XCTAssertEqual(size.width, PreviewLayout.width)
         XCTAssertGreaterThan(size.height, PreviewLayout.plotHeight)
         let ctx = Self.bitmap(size)
-        PreviewLayout.draw(doc, diagnostic: "Map probe: OK 0.8s 1600×1040", in: ctx, size: size)
+        PreviewLayout.draw(doc, in: ctx, size: size)
         XCTAssertTrue(Self.isWhite(Self.pixel(ctx, 2, 2)))
     }
 
     func testPreviewLayoutWithoutDrawableDataStillRenders() throws {
         let doc = try GPXParser.parse(url: GPXParserTests.fixture("trk-without-trkseg.gpx"), limits: .preview)
-        let size = PreviewLayout.contentSize(for: doc, diagnostic: nil)
+        let size = PreviewLayout.contentSize(for: doc)
         let ctx = Self.bitmap(size)
-        PreviewLayout.draw(doc, diagnostic: nil, in: ctx, size: size)
+        PreviewLayout.draw(doc, in: ctx, size: size)
         XCTAssertTrue(Self.isWhite(Self.pixel(ctx, 2, 2)))
     }
 

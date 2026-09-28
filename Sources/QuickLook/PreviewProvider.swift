@@ -2,8 +2,8 @@ import Foundation
 import os
 import QuickLookUI
 
-/// Data-based Quick Look preview: parses the GPX, runs the stage-1 map probe
-/// and replies with a vector (PDF) drawing of `PreviewLayout`.
+/// Data-based Quick Look preview: parses the GPX and replies with a vector
+/// (PDF) drawing of `PreviewLayout`.
 final class PreviewProvider: QLPreviewProvider, QLPreviewingController {
 
     private static let log = Logger(subsystem: "io.github.iwan-uschka.GPXPreview", category: "preview")
@@ -21,16 +21,9 @@ final class PreviewProvider: QLPreviewProvider, QLPreviewingController {
             }
         }
 
-        // Stage-1 diagnostic only: the probe result becomes a text line; the
-        // snapshot itself is not drawn.
-        var diagnostic: String?
-        if let box = BoundingBox(points: doc.allPoints) {
-            diagnostic = await MapSnapshot.probe(region: MapSnapshot.region(for: box)).diagnosticLine
-        }
-
-        let size = PreviewLayout.contentSize(for: doc, diagnostic: diagnostic)
+        let size = PreviewLayout.contentSize(for: doc)
         let reply = QLPreviewReply(contextSize: size, isBitmap: false) { ctx, _ in
-            PreviewLayout.draw(doc, diagnostic: diagnostic, in: ctx, size: size)
+            PreviewLayout.draw(doc, in: ctx, size: size)
         }
         reply.title = doc.title
         return reply

@@ -4,8 +4,7 @@ import Foundation
 
 /// Page layout of the spacebar preview, drawn into a plain y-up `CGContext`
 /// (Quick Look's vector reply context in production, a bitmap in tests):
-/// title, vector plot, stats line, optional diagnostic line, keyword labels,
-/// link, description.
+/// title, vector plot, stats line, keyword labels, link, description.
 enum PreviewLayout {
     static let width: CGFloat = 800
     static let margin: CGFloat = 24
@@ -94,13 +93,12 @@ enum PreviewLayout {
 
     private static let keywordFont = TextDrawing.font(size: 11)
 
-    private static func blocks(_ doc: GPXDocument, diagnostic: String?) -> [Block] {
+    private static func blocks(_ doc: GPXDocument) -> [Block] {
         let contentWidth = width - 2 * margin
         var b: [Block] = [.title(doc.title), .gap(8), .plot]
         let notes = notes(doc)
         b.append(notes.isEmpty ? .gap(8) : .note(notes.joined(separator: " · ")))
         b.append(.line(statsLine(doc), bodyFont, textColor))
-        if let diagnostic { b.append(.line(diagnostic, smallFont, secondaryColor)) }
         if !doc.keywords.isEmpty {
             b.append(.gap(6))
             b.append(.keywords(keywordRows(doc.keywords, width: contentWidth)))
@@ -131,20 +129,20 @@ enum PreviewLayout {
         return rows
     }
 
-    static func contentSize(for doc: GPXDocument, diagnostic: String?) -> CGSize {
-        let h = blocks(doc, diagnostic: diagnostic).reduce(margin) { $0 + $1.height }
+    static func contentSize(for doc: GPXDocument) -> CGSize {
+        let h = blocks(doc).reduce(margin) { $0 + $1.height }
         return CGSize(width: width, height: ceil(h))
     }
 
     /// Draws the full preview page. `size` must come from `contentSize`.
-    static func draw(_ doc: GPXDocument, diagnostic: String?, in ctx: CGContext, size: CGSize) {
+    static func draw(_ doc: GPXDocument, in ctx: CGContext, size: CGSize) {
         ctx.setFillColor(backgroundColor)
         ctx.fill(CGRect(origin: .zero, size: size))
 
         var top = size.height - margin
         let x = margin
         let contentWidth = size.width - 2 * margin
-        for block in blocks(doc, diagnostic: diagnostic) {
+        for block in blocks(doc) {
             let h = block.height
             let rect = CGRect(x: x, y: top - h, width: contentWidth, height: h)
             switch block {

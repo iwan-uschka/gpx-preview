@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Remove "GPX Preview.app" from /Applications and unregister its extensions.
+# Remove "GPXPreview.app" from /Applications and unregister its extensions.
 set -euo pipefail
 
-DEST="/Applications/GPX Preview.app"
+DEST="/Applications/GPXPreview.app"
 LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
 
-killall "GPX Preview" GPXQuickLook GPXThumbnail >/dev/null 2>&1 || true
+killall "GPXPreview" GPXQuickLook GPXThumbnail >/dev/null 2>&1 || true
 if [ -d "$DEST" ]; then
   pluginkit -r "$DEST/Contents/PlugIns/GPXQuickLook.appex" >/dev/null 2>&1 || true
   pluginkit -r "$DEST/Contents/PlugIns/GPXThumbnail.appex" >/dev/null 2>&1 || true

@@ -3,15 +3,11 @@
 <plist version="1.0">
 <dict>
     <!-- Sandbox is required for Quick Look to register the extension.
-         Quick Look grants read access to the previewed file. network.client
-         lets MKMapSnapshotter reach Apple Maps (stage-1 probe). Never add the
-         restricted com.apple.developer.maps entitlement: an ad-hoc-signed
-         binary claiming it is killed at launch. -->
+         Quick Look grants read access to the previewed file. The preview
+         itself is drawn locally from the file alone. -->
     <key>com.apple.security.app-sandbox</key>
     <true/>
     <key>com.apple.security.files.user-selected.read-only</key>
-    <true/>
-    <key>com.apple.security.network.client</key>
     <true/>
 </dict>
 </plist>

@@ -3,22 +3,15 @@
 Quick Look preview and Finder thumbnails for `.gpx` files on current macOS.
 
 The old `.qlgenerator` plugins no longer load on macOS 15 and later, and there
-is no modern `.appex` GPX previewer. This project tests whether sandboxed app
-extensions can fill that gap:
+is no modern `.appex` GPX previewer. This project fills that gap with two
+sandboxed app extensions:
 
 - a **Preview Extension** (spacebar preview) that draws the track as a vector
-  line plot with the key metadata. A later stage may put the track on an Apple
-  Maps basemap; this build only runs a *diagnostic* map request (see Status).
+  line plot with the key metadata, entirely locally, with no network access.
 - a **Thumbnail Extension** that draws the track shape for Finder icons,
   entirely locally, with no network access.
 
-No third-party dependencies, no third-party map provider.
-
-## Status
-
-Stage 1 (scaffold, vector preview and thumbnail, MapKit feasibility probe) is
-built and unit-tested. The go/no-go verification (stage 2) has not been run
-yet.
+No third-party dependencies, no map basemap of any kind.
 
 ## Install
 
@@ -31,6 +24,13 @@ bash scripts/install.sh      # copies to /Applications and registers the extensi
 
 Uninstall with `bash scripts/uninstall.sh`. If Finder keeps showing old `.gpx`
 icons, run `bash scripts/refresh-thumbnails.sh`.
+
+`install.sh`/`uninstall.sh` write to `/Applications`, which requires
+admin-group membership. On an organization-managed Mac your account may be a
+Standard account with no local admin password to enter — in that case, use
+whatever privilege-elevation tool your organization's device management
+provides to request temporary admin rights first, then run the script
+normally.
 
 ### Gatekeeper: "Open Anyway"
 
@@ -45,24 +45,27 @@ under **System Settings → General → Login Items & Extensions → Quick Look*
 
 ## Privacy
 
-- **Preview extension.** It holds the `network.client` entitlement so it can ask
-  Apple Maps for map imagery of the area shown in the file. That is not wired
-  up in this build: the preview is still vector-only. The only request it makes
-  is a diagnostic map snapshot for the file's bounding box, whose outcome shows
-  up as one "Map probe" line in the preview (see Status). No file contents
-  leave your Mac; the request carries only a map region.
+- **Preview extension.** No network entitlement. It reads the file Quick Look
+  hands it and draws locally, nothing else.
 - **Thumbnail extension.** No network entitlement, now or later. It reads the
   file Finder hands it and draws locally, nothing else. `scripts/build.sh`
   fails the build if that extension ever gains a network entitlement.
-- **Host app.** Its network entitlement exists only for the "Test map access"
-  button, which runs the same diagnostic request on demand.
+- **Host app.** No network entitlement. It only shows install guidance.
 
-### Why the thumbnail never uses a map
+### Why neither extension uses a map
 
-Finder requests thumbnails in bulk and caches them on disk. Apple's MapKit
-terms forbid bulk downloading and caching of map data, and Apple's map
-attribution cannot stay legible at 32–256 px icon sizes. So the thumbnail is
-the vector track shape, permanently.
+The two extensions are vector-only for different reasons:
+
+- **Thumbnail: terms and legibility.** Finder requests thumbnails in bulk and
+  caches them on disk. Apple's MapKit terms forbid bulk downloading and caching
+  of map data, and Apple's map attribution cannot stay legible at 32–256 px
+  icon sizes. So the thumbnail is the vector track shape, permanently, even if
+  map access were possible.
+- **Preview: not technically possible.** A single spacebar preview would not
+  have those problems, but the sandbox blocks the extension's network access
+  entirely: MapKit returns only an empty placeholder grid, and plain
+  connections fail at the `connect()` syscall, even to a loopback address.
+  See [CHANGELOG.md](CHANGELOG.md) for how this was established.
 
 ## How it works
 
@@ -76,29 +79,15 @@ the vector track shape, permanently.
   stored points, element count, text per element, wall-clock deadline) so a huge
   or hostile file fails fast. DTD entity declarations abort parsing, which
   blocks billion-laughs and XXE inputs.
+- The preview extension uses the data-based Quick Look API: a
+  `QLPreviewProvider` parses the file in `providePreview(for:)` and replies with
+  a vector (non-bitmap) `QLPreviewReply` that draws the page. A file that fails
+  to parse gets an error card in the same kind of reply, not Quick Look's
+  generic fallback.
 - The vector plot is a local equirectangular projection fitted to the track's
   bounding box (8% padding, aspect ratio preserved), one polyline per track
   segment, dashed routes, waypoint dots, green/red start/end markers and a scale
   bar.
-
-## Manual verification checklist
-
-Unit tests (`xcodebuild test -scheme GPXPreview`) cover the parser, limits,
-geometry and rendering. The following needs a real install:
-
-- [ ] `pluginkit -mAvvv -p com.apple.quicklook.preview | grep -A3 GPX` lists the preview extension
-- [ ] `pluginkit -mAvvv -p com.apple.quicklook.thumbnail | grep -A3 GPX` lists the thumbnail extension
-- [ ] `swift -e 'import UniformTypeIdentifiers; print(UTType(filenameExtension:"gpx")!.identifier)'` prints `com.topografix.gpx`
-- [ ] `mdls -name kMDItemContentType Tests/Fixtures/full-1.1.gpx` shows `com.topografix.gpx`
-- [ ] `lsregister -dump | grep -A12 com.topografix.gpx` shows the GPX Preview import
-- [ ] `qlmanage -p Tests/Fixtures/full-1.1.gpx` shows the track plot, not XML text
-- [ ] `qlmanage -t -s 512 -o /tmp/qlout Tests/Fixtures/full-1.1.gpx` writes a route thumbnail
-- [ ] Finder: spacebar on a `.gpx` shows the preview; icon and column view show the route thumbnail
-- [ ] System Settings → General → Login Items & Extensions → Quick Look lists both extensions, enabled
-- [ ] First launch: Gatekeeper "Open Anyway" works as described above
-
-`lsregister` lives at
-`/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister`.
 
 ## Legal
 

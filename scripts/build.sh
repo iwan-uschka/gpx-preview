@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build "GPX Preview.app" (host + Quick Look preview + thumbnail extensions)
+# Build "GPXPreview.app" (host + Quick Look preview + thumbnail extensions)
 # and ad-hoc sign it. No paid Apple developer account needed.
 #
 # Usage: scripts/build.sh [x.y.z]
@@ -39,7 +39,7 @@ xcodebuild \
   CURRENT_PROJECT_VERSION="$V" \
   build | { if command -v xcbeautify >/dev/null 2>&1; then xcbeautify; else grep -E 'error:|warning:|BUILD (SUCCEEDED|FAILED)' || true; fi; }
 
-APP="build/DerivedData/Build/Products/Release/GPX Preview.app"
+APP="build/DerivedData/Build/Products/Release/GPXPreview.app"
 QL="$APP/Contents/PlugIns/GPXQuickLook.appex"
 TH="$APP/Contents/PlugIns/GPXThumbnail.appex"
 for bundle in "$APP" "$QL" "$TH"; do
