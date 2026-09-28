@@ -34,7 +34,10 @@
          owner. If another installed app exports it, LaunchServices prefers
          that (identical) declaration; if none does, this import is what makes
          .gpx resolve to com.topografix.gpx instead of a dyn.* type that no
-         extension can target. -->
+         extension can target. (Switching to export was tried as a fix for the
+         Thumbnail extension never being picked, see README "Why Finder
+         thumbnails don't appear" — it made no difference, so it isn't worth
+         the false-ownership risk.) -->
     <key>UTImportedTypeDeclarations</key>
     <array>
         <dict>

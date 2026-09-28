@@ -4,7 +4,8 @@ import QuickLookThumbnailing
 
 /// Finder / Spotlight thumbnail: the track shape on a white card, drawn from
 /// the local vector path only. This extension has no network entitlement by
-/// design (see README, "Why neither extension uses a map").
+/// design. (In practice Finder never calls it at all — see README, "Why
+/// Finder thumbnails don't appear".)
 final class ThumbnailProvider: QLThumbnailProvider {
 
     private static let log = Logger(subsystem: "io.github.iwan-uschka.GPXPreview", category: "thumbnail")
