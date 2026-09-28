@@ -16,6 +16,7 @@ else
   echo "note: $DEST not found; nothing to remove."
 fi
 qlmanage -r >/dev/null 2>&1 || true
+qlmanage -r cache >/dev/null 2>&1 || true
 
 # PluginKit drops registrations asynchronously; report anything left over.
 for id in io.github.iwan-uschka.GPXPreview.QuickLook io.github.iwan-uschka.GPXPreview.Thumbnail; do

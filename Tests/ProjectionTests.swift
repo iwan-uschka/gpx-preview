@@ -76,8 +76,14 @@ final class ProjectionTests: XCTestCase {
         XCTAssertEqual(TrackRenderer.niceLength(maxMetres: 7_000), 5_000)
         XCTAssertEqual(TrackRenderer.niceLength(maxMetres: 1_000), 1_000)
         XCTAssertEqual(TrackRenderer.niceLength(maxMetres: 0), 0)
+        XCTAssertEqual(TrackRenderer.niceLength(maxMetres: -5), 0)
+        XCTAssertEqual(TrackRenderer.niceLength(maxMetres: .nan), 0)
+        // breaks-if: niceLength drops its `isFinite` guard (infinity passes `> 0` and comes back as infinity).
+        XCTAssertEqual(TrackRenderer.niceLength(maxMetres: .infinity), 0)
         XCTAssertEqual(TrackRenderer.formatDistance(2_000), "2 km")
         XCTAssertEqual(TrackRenderer.formatDistance(1_500), "1.5 km")
+        // Non-round values from 10 km up drop the decimal.
+        XCTAssertEqual(TrackRenderer.formatDistance(12_345), "12 km")
         XCTAssertEqual(TrackRenderer.formatDistance(500), "500 m")
     }
 }

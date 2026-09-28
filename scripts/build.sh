@@ -66,10 +66,16 @@ sign --entitlements Sources/Host/Host.entitlements "$APP"
 echo "── Verifying ──"
 codesign --verify --deep --strict --verbose=2 "$APP" || {
   echo "error: signature invalid for $APP" >&2; exit 1; }
-# The thumbnail extension must never gain network access.
-if codesign -d --entitlements - --xml "$TH" 2>/dev/null | grep -q 'com.apple.security.network'; then
-  echo "error: GPXThumbnail.appex carries a network entitlement" >&2; exit 1
-fi
+# No bundle may ever gain network access: both extensions draw from the file
+# alone, and the host app only shows install guidance. A failure to read the
+# entitlements aborts too, so the check can never pass without having run.
+for bundle in "$QL" "$TH" "$APP"; do
+  ents="$(codesign -d --entitlements - --xml "$bundle" 2>&1)" || {
+    echo "error: could not read entitlements for $(basename "$bundle")" >&2; exit 1; }
+  if grep -q 'com.apple.security.network' <<<"$ents"; then
+    echo "error: $(basename "$bundle") carries a network entitlement" >&2; exit 1
+  fi
+done
 
 echo
 echo "✓ Built $APP ($V)"

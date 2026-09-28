@@ -11,10 +11,15 @@ qlmanage -r cache >/dev/null || {
   echo "error: qlmanage -r cache failed; the thumbnail cache was NOT reset" >&2; exit 1; }
 echo "✓ Cache reset."
 
-if [ "${1:-}" = "--restart-finder" ]; then
-  echo "Restarting Finder (open Finder windows will close and reopen)…"
-  killall Finder
-else
-  echo "Finder may still show old icons from memory. To restart it:"
-  echo "  killall Finder        (or rerun with --restart-finder)"
-fi
+case "${1:-}" in
+  --restart-finder)
+    echo "Restarting Finder (open Finder windows will close and reopen)…"
+    killall Finder || {
+      echo "error: killall Finder failed; Finder was NOT restarted (the cache reset above still happened)" >&2; exit 1; } ;;
+  *)
+    if [ -n "${1:-}" ]; then
+      echo "warning: unrecognized argument '$1', ignoring" >&2
+    fi
+    echo "Finder may still show old icons from memory. To restart it:"
+    echo "  killall Finder        (or rerun with --restart-finder)" ;;
+esac

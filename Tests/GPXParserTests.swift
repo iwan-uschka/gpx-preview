@@ -110,11 +110,16 @@ final class GPXParserTests: XCTestCase {
 
     func testExtensionsContentIgnored() throws {
         let doc = try parse("extensions-heavy.gpx")
+        // breaks-if: a <name> or <desc> inside <metadata><extensions> overwrites the real metadata fields
         XCTAssertEqual(doc.name, "With Extensions")
         XCTAssertNil(doc.desc)
+        // breaks-if: the decoy <trk> nested under the root-level <extensions> is parsed as a real track
         XCTAssertEqual(doc.tracks.count, 1)
+        // breaks-if: a <trk>'s <extensions><name> is used as the track name
         XCTAssertNil(doc.tracks[0].name)
+        // breaks-if: a <trkpt>'s nested extension <ele> shadows its real sibling <ele>
         XCTAssertEqual(doc.tracks[0].segments[0].map(\.ele), [10, 12])
+        // breaks-if: the decoy trkpt inside the root-level <extensions> is counted as a real point
         XCTAssertEqual(doc.pointCount, 2)
     }
 
@@ -185,6 +190,21 @@ final class GPXParserTests: XCTestCase {
         XCTAssertThrowsError(try GPXParser.parse(url: url, limits: .preview)) { error in
             guard case .unreadable = error as? GPXError else { return XCTFail("got \(error)") }
         }
+    }
+
+    // breaks-if: the isRegularFile guard in parse(url:) is removed or its condition inverted.
+    func testDirectoryURLIsUnreadable() {
+        let url = FileManager.default.temporaryDirectory
+        XCTAssertThrowsError(try GPXParser.parse(url: url, limits: .preview)) { error in
+            XCTAssertEqual(error as? GPXError, .unreadable("not a regular file"))
+        }
+    }
+
+    // breaks-if: text is kept in one shared buffer that a stray child element's start or end resets.
+    func testStrayChildElementKeepsParentText() throws {
+        let data = Data("<gpx version=\"1.1\"><metadata><name>Hello<foo/>World</name></metadata></gpx>".utf8)
+        let doc = try GPXParser.parse(data: data, limits: .preview)
+        XCTAssertEqual(doc.name, "HelloWorld")
     }
 
     // breaks-if: truncated XML without a closing root tag is accepted as a valid document.

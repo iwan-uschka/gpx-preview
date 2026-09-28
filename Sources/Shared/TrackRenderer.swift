@@ -54,14 +54,15 @@ enum TrackRenderer {
         for route in doc.routes { strokePolyline(route.points, width: style.lineWidth, ctx: ctx, project: project) }
         ctx.setLineDash(phase: 0, lengths: [])
 
+        let segments = doc.trackSegments
         ctx.setStrokeColor(style.trackColor)
-        for seg in doc.trackSegments { strokePolyline(seg, width: style.lineWidth, ctx: ctx, project: project) }
+        for seg in segments { strokePolyline(seg, width: style.lineWidth, ctx: ctx, project: project) }
 
         ctx.setFillColor(style.waypointColor)
         for wpt in doc.waypoints { fillDot(project(wpt), radius: style.waypointRadius, ctx: ctx) }
 
         if style.endpointRadius > 0 {
-            let line = doc.trackSegments.flatMap { $0 }
+            let line = segments.flatMap { $0 }
             let path = line.isEmpty ? doc.routes.flatMap(\.points) : line
             if let first = path.first, let last = path.last, path.count > 1 {
                 ctx.setFillColor(startColor)

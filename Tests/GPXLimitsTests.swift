@@ -26,7 +26,9 @@ final class GPXLimitsTests: XCTestCase {
 
     // breaks-if: the stored-points cap stops being enforced, or truncation is not flagged.
     func testThumbnailPresetTruncatesAtStoredPointCap() throws {
-        let doc = try GPXParser.parse(data: Self.gpx(points: 300_000), limits: .thumbnail)
+        var limits = GPXLimits.thumbnail
+        limits.deadline = .seconds(30) // decouple from the stored-points cap under test
+        let doc = try GPXParser.parse(data: Self.gpx(points: 300_000), limits: limits)
         XCTAssertTrue(doc.truncated)
         XCTAssertEqual(doc.pointCount, GPXLimits.thumbnail.maxStoredPoints)
     }
@@ -51,6 +53,18 @@ final class GPXLimitsTests: XCTestCase {
         var limits = GPXLimits.preview
         limits.maxElements = 1_000
         XCTAssertThrowsError(try GPXParser.parse(data: Data(s.utf8), limits: limits)) {
+            XCTAssertEqual($0 as? GPXError, .limitExceeded(.elements))
+        }
+    }
+
+    // breaks-if: the element-count comparison in GPXParser is off by one in either direction.
+    func testElementCapIsExactBoundary() throws {
+        var limits = GPXLimits.preview
+        // gpx(points: 1) has exactly four start elements: gpx, trk, trkseg, trkpt.
+        limits.maxElements = 4
+        XCTAssertNoThrow(try GPXParser.parse(data: Self.gpx(points: 1), limits: limits))
+        limits.maxElements = 3
+        XCTAssertThrowsError(try GPXParser.parse(data: Self.gpx(points: 1), limits: limits)) {
             XCTAssertEqual($0 as? GPXError, .limitExceeded(.elements))
         }
     }

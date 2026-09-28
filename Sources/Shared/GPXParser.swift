@@ -104,8 +104,9 @@ enum GPXParser {
         var errorColumn: Int?
 
         private var stack: [String] = []
-        private var text = ""
-        private var textLength = 0
+        /// One text buffer per open element, parallel to `stack`, so a stray
+        /// child element cannot discard its parent's text.
+        private var textStack: [(text: String, length: Int)] = []
         private var elementCount = 0
         private var storedPoints = 0
 
@@ -168,8 +169,7 @@ enum GPXParser {
                 doc.version = Self.version(attribute: attributes["version"], namespace: namespaceURI)
             }
             stack.append(name)
-            text = ""
-            textLength = 0
+            textStack.append(("", 0))
 
             let depth = stack.count
             let parent = depth >= 2 ? stack[depth - 2] : ""
@@ -195,15 +195,16 @@ enum GPXParser {
         }
 
         func parser(_ parser: XMLParser, foundCharacters string: String) {
-            guard abortReason == nil, textLength < limits.maxTextPerElement else { return }
-            let remaining = limits.maxTextPerElement - textLength
+            guard abortReason == nil, let top = textStack.indices.last,
+                  textStack[top].length < limits.maxTextPerElement else { return }
+            let remaining = limits.maxTextPerElement - textStack[top].length
             let count = string.count
             if count <= remaining {
-                text += string
-                textLength += count
+                textStack[top].text += string
+                textStack[top].length += count
             } else {
-                text += string.prefix(remaining)
-                textLength = limits.maxTextPerElement
+                textStack[top].text += string.prefix(remaining)
+                textStack[top].length = limits.maxTextPerElement
             }
         }
 
@@ -212,7 +213,7 @@ enum GPXParser {
             guard abortReason == nil, !stack.isEmpty else { return }
             let depth = stack.count
             let parent = depth >= 2 ? stack[depth - 2] : ""
-            let value = text
+            let value = textStack.removeLast().text
 
             switch (depth, name) {
             // GPX 1.1 metadata
@@ -246,8 +247,6 @@ enum GPXParser {
             default: break
             }
             stack.removeLast()
-            text = ""
-            textLength = 0
         }
 
         private static func isPoint(_ name: String, depth: Int) -> Bool {

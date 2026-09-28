@@ -48,9 +48,11 @@ under **System Settings → General → Login Items & Extensions → Quick Look*
 - **Preview extension.** No network entitlement. It reads the file Quick Look
   hands it and draws locally, nothing else.
 - **Thumbnail extension.** No network entitlement, now or later. It reads the
-  file Finder hands it and draws locally, nothing else. `scripts/build.sh`
-  fails the build if that extension ever gains a network entitlement.
+  file Finder hands it and draws locally, nothing else.
 - **Host app.** No network entitlement. It only shows install guidance.
+
+`scripts/build.sh` fails the build if any of the three ever gains a network
+entitlement.
 
 ### Why neither extension uses a map
 

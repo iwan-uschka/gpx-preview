@@ -86,6 +86,58 @@ final class RenderSmokeTests: XCTestCase {
         XCTAssertGreaterThan(Self.pixel(ctx, 82, 10).3, 0)  // inside segment b
     }
 
+    /// True when `p` is opaque and each channel is within `tolerance` of `color`'s sRGB components.
+    private static func matches(_ p: (UInt8, UInt8, UInt8, UInt8), _ color: CGColor, tolerance: Int = 3) -> Bool {
+        guard let c = color.converted(to: CGColorSpace(name: CGColorSpace.sRGB)!, intent: .defaultIntent, options: nil)?
+            .components, c.count >= 3 else { return false }
+        let expected = c.prefix(3).map { Int(($0 * 255).rounded()) }
+        let actual = [Int(p.0), Int(p.1), Int(p.2)]
+        return p.3 == 255 && zip(expected, actual).allSatisfy { abs($0 - $1) <= tolerance }
+    }
+
+    // breaks-if: the endpoint-marker branch in TrackRenderer.draw is removed or its colors are swapped
+    func testEndpointMarkersUseStartAndEndColors() {
+        let ctx = Self.bitmap(CGSize(width: 64, height: 64))
+        var doc = GPXDocument()
+        doc.tracks = [GPXTrack(name: nil, segments: [[GPXPoint(lat: 0, lon: 0), GPXPoint(lat: 1, lon: 0)]])]
+        TrackRenderer.draw(doc, in: ctx, rect: CGRect(x: 0, y: 0, width: 64, height: 64),
+                           project: { CGPoint(x: 32, y: 10 + $0.lat * 44) }, style: .preview)
+        XCTAssertTrue(Self.matches(Self.pixel(ctx, 32, 10), TrackRenderer.startColor), "start marker")
+        XCTAssertTrue(Self.matches(Self.pixel(ctx, 32, 54), TrackRenderer.endColor), "end marker")
+    }
+
+    // breaks-if: the route branch in TrackRenderer.draw is removed, or the endpoint markers stop falling back to routes when there are no tracks
+    func testRouteOnlyDocumentDrawsRouteAndEndpointMarkers() {
+        let ctx = Self.bitmap(CGSize(width: 100, height: 20))
+        var doc = GPXDocument()
+        doc.routes = [GPXRoute(name: nil, points: [GPXPoint(lat: 0, lon: 0), GPXPoint(lat: 0, lon: 5)])]
+        TrackRenderer.draw(doc, in: ctx, rect: CGRect(x: 0, y: 0, width: 100, height: 20),
+                           project: { CGPoint(x: 10 + $0.lon * 16, y: 10) }, style: .preview)
+        XCTAssertGreaterThan(Self.pixel(ctx, 10, 10).3, 0)   // route start
+        XCTAssertGreaterThan(Self.pixel(ctx, 90, 10).3, 0)   // route end
+        XCTAssertTrue(Self.matches(Self.pixel(ctx, 10, 10), TrackRenderer.startColor), "route start marker")
+        XCTAssertTrue(Self.matches(Self.pixel(ctx, 90, 10), TrackRenderer.endColor), "route end marker")
+    }
+
+    // breaks-if: the points.count == 1 special case in strokePolyline is removed
+    func testSinglePointSegmentDrawsAMark() {
+        let ctx = Self.bitmap(CGSize(width: 64, height: 64))
+        var doc = GPXDocument()
+        doc.tracks = [GPXTrack(name: nil, segments: [[GPXPoint(lat: 0, lon: 0)]])]
+        TrackRenderer.draw(doc, in: ctx, rect: CGRect(x: 0, y: 0, width: 64, height: 64),
+                           project: { _ in CGPoint(x: 32, y: 32) }, style: .preview)
+        XCTAssertGreaterThan(Self.pixel(ctx, 32, 32).3, 0)
+    }
+
+    // breaks-if: the guard in drawScaleBar or its line-drawing is broken
+    func testScaleBarDrawsWhenMetresPerPointPositive() {
+        let ctx = Self.bitmap(CGSize(width: 100, height: 40))
+        // 10 m/pt over 100 pt → 200 m bar, 20 pt long, baseline at y = 12 from x = 12.
+        TrackRenderer.drawScaleBar(in: ctx, rect: CGRect(x: 0, y: 0, width: 100, height: 40),
+                                   metresPerPoint: 10, color: CGColor(gray: 0, alpha: 1))
+        XCTAssertGreaterThan(Self.pixel(ctx, 20, 12).3, 0)
+    }
+
     func testPreviewLayoutDrawsWithoutCrashing() throws {
         let doc = try GPXParser.parse(url: GPXParserTests.fixture("full-1.1.gpx"), limits: .preview)
         let size = PreviewLayout.contentSize(for: doc)

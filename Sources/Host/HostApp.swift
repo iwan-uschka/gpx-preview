@@ -21,7 +21,7 @@ struct ContentView: View {
             }
 
             Text("Select a .gpx file in Finder and press Space to preview it. Finder icons show "
-                 + "the route shape as a thumbnail. If nothing appears, enable GPX Preview under "
+                 + "the route shape as a thumbnail. If nothing appears, enable both GPX Preview and GPX Thumbnail under "
                  + "System Settings → General → Login Items & Extensions → Quick Look.")
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

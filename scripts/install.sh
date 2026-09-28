@@ -15,6 +15,13 @@ codesign --verify --deep --strict "$APP" || {
 echo "── Quitting any running copy ──"
 osascript -e 'quit app "GPXPreview"' >/dev/null 2>&1 || true
 killall "GPXPreview" GPXQuickLook GPXThumbnail >/dev/null 2>&1 || true
+# Unregister a previous install before deleting it, so no PluginKit or
+# LaunchServices record is left pointing at a bundle that's gone.
+if [ -d "$DEST" ]; then
+  pluginkit -r "$DEST/Contents/PlugIns/GPXQuickLook.appex" >/dev/null 2>&1 || true
+  pluginkit -r "$DEST/Contents/PlugIns/GPXThumbnail.appex" >/dev/null 2>&1 || true
+  "$LSREGISTER" -u "$DEST" >/dev/null 2>&1 || true
+fi
 # Forget the build-tree copy so the system can't pick its extensions instead.
 "$LSREGISTER" -u "$APP" >/dev/null 2>&1 || true
 

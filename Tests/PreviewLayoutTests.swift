@@ -23,6 +23,29 @@ final class PreviewLayoutTests: XCTestCase {
         XCTAssertTrue(PreviewLayout.statsLine(doc).contains("1 invalid point skipped"))
     }
 
+    // breaks-if: the `count == 1` pluralisation ternary in statsLine is inverted or dropped.
+    func testStatsLineSingularAndZeroPointCounts() {
+        var doc = GPXDocument()
+        doc.waypoints = [GPXPoint(lat: 0, lon: 0)]
+        // A lone waypoint has no distance, elevation, time or notes, so the count is the whole line.
+        XCTAssertEqual(PreviewLayout.statsLine(doc), "1 point")
+        XCTAssertEqual(PreviewLayout.statsLine(GPXDocument()), "0 points")
+    }
+
+    // breaks-if: the two note conditions in notes(_:) are merged, so one flag alone no longer yields its note.
+    func testStatsLineCarriesEachNoteAlone() {
+        var truncatedOnly = GPXDocument()
+        truncatedOnly.truncated = true
+        let t = PreviewLayout.statsLine(truncatedOnly)
+        XCTAssertTrue(t.contains("(truncated)"), t)
+        XCTAssertFalse(t.contains("skipped"), t)
+        var invalidOnly = GPXDocument()
+        invalidOnly.invalidPointCount = 3
+        let i = PreviewLayout.statsLine(invalidOnly)
+        XCTAssertTrue(i.contains("3 invalid points skipped"), i)
+        XCTAssertFalse(i.contains("(truncated)"), i)
+    }
+
     func testStatsLineOmitsElevationAndTimeWhenAbsent() throws {
         let doc = try GPXParser.parse(url: GPXParserTests.fixture("minimal-no-metadata.gpx"), limits: .preview)
         let line = PreviewLayout.statsLine(doc)
@@ -55,5 +78,21 @@ final class PreviewLayoutTests: XCTestCase {
     func testErrorTextNamesLine() {
         XCTAssertEqual(PreviewLayout.errorText(GPXError.malformedXML(line: 12, column: 4)),
                        "Couldn't read GPX: malformed XML at line 12, column 4")
+    }
+
+    // breaks-if: errorText drops the `?? error.localizedDescription` fallback for non-GPXError errors.
+    func testErrorTextFallsBackToLocalizedDescriptionForNonGPXError() {
+        struct Boom: Error, LocalizedError { var errorDescription: String? { "boom" } }
+        XCTAssertEqual(PreviewLayout.errorText(Boom()), "Couldn't read GPX: boom")
+    }
+
+    func testErrorMessageForEveryOtherCase() {
+        XCTAssertEqual(GPXError.notGPX.message, "not a GPX file")
+        XCTAssertEqual(GPXError.noDrawableData.message, "no track data")
+        XCTAssertEqual(GPXError.limitExceeded(.fileSize).message, "file is too large")
+        XCTAssertEqual(GPXError.limitExceeded(.elements).message, "file has too many XML elements")
+        XCTAssertEqual(GPXError.timedOut.message, "parsing took too long")
+        XCTAssertEqual(GPXError.entityDeclaration.message, "file declares XML entities, which GPX never uses")
+        XCTAssertEqual(GPXError.unreadable("x").message, "file could not be read (x)")
     }
 }

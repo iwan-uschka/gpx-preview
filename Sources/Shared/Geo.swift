@@ -32,7 +32,8 @@ enum Geo {
     /// Elevation gain with a hysteresis band: a climb only counts once the
     /// elevation has risen more than `hysteresis` above the last reference
     /// level, which filters GPS altitude jitter. Summed per segment; points
-    /// without `<ele>` are skipped. Returns nil when no point has elevation.
+    /// without `<ele>`, or with a non-finite `<ele>`, are skipped. Returns nil
+    /// when no point has a usable elevation.
     static func elevationGain(segments: [[GPXPoint]], hysteresis: Double = 1) -> Double? {
         var any = false
         var gain = 0.0
@@ -69,6 +70,11 @@ struct BoundingBox: Equatable {
     var minLon: Double
     var maxLon: Double
     /// True when negative longitudes were shifted by +360.
+    ///
+    /// Heuristic: a raw longitude span over 180° is taken to mean the points
+    /// wrap around ±180. A track genuinely wider than 180° that never wraps
+    /// (e.g. -100…100) is shifted too, which can give a wider box than the
+    /// unshifted one. Real contiguous GPX tracks rarely span that far.
     var crossesAntimeridian: Bool
 
     var latSpan: Double { maxLat - minLat }
@@ -101,7 +107,7 @@ struct BoundingBox: Equatable {
         }
     }
 
-    init(minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, crossesAntimeridian: Bool) {
+    private init(minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, crossesAntimeridian: Bool) {
         self.minLat = minLat; self.maxLat = maxLat
         self.minLon = minLon; self.maxLon = maxLon
         self.crossesAntimeridian = crossesAntimeridian

@@ -29,6 +29,7 @@ final class GeoTests: XCTestCase {
         XCTAssertLessThan(joined, 5_000)
     }
 
+    // breaks-if: the `guard seg.count > 1` short-circuit in Geo.distance is removed.
     func testSinglePointSegmentHasZeroDistance() {
         XCTAssertEqual(Geo.distance(segments: [[p(1, 1)], []]), 0)
     }
@@ -39,10 +40,17 @@ final class GeoTests: XCTestCase {
         XCTAssertEqual(Geo.elevationGain(segments: [jitter]), 0)
     }
 
-    func testElevationGainCountsRealClimbs() {
+    func testElevationGainCountsRealClimbs() throws {
         let climb = [100, 105, 103, 110, 90, 95].map { p(0, 0, ele: $0) }
         // 100→105 (+5), drop to 103 (beyond the band: new reference), 103→110 (+7), drop to 90, 90→95 (+5)
-        XCTAssertEqual(Geo.elevationGain(segments: [climb])!, 17, accuracy: 1e-9)
+        let gain = try XCTUnwrap(Geo.elevationGain(segments: [climb]))
+        XCTAssertEqual(gain, 17, accuracy: 1e-9)
+    }
+
+    // breaks-if: the climb comparison in elevationGain becomes `>=` and a rise of exactly `hysteresis` counts.
+    func testElevationGainExactlyAtHysteresisNotCounted() {
+        let points = [p(0, 0, ele: 100), p(0, 0, ele: 101)] // delta == hysteresis
+        XCTAssertEqual(Geo.elevationGain(segments: [points]), 0)
     }
 
     // breaks-if: elevation gain bridges segments and counts the jump between them.
@@ -52,8 +60,16 @@ final class GeoTests: XCTestCase {
         XCTAssertEqual(Geo.elevationGain(segments: [a, b]), 0)
     }
 
+    // breaks-if: elevationGain returns 0 instead of nil when no point has `<ele>`.
     func testElevationGainNilWithoutElevation() {
         XCTAssertNil(Geo.elevationGain(segments: [[p(0, 0), p(1, 1)]]))
+    }
+
+    // breaks-if: the isFinite filter in elevationGain is dropped and NaN/Infinity poison the sum.
+    func testElevationGainSkipsNonFiniteElevations() {
+        let seg = [p(0, 0, ele: 100), p(0, 0, ele: .nan), p(0, 0, ele: .infinity), p(0, 0, ele: 110)]
+        XCTAssertEqual(Geo.elevationGain(segments: [seg]), 10)
+        XCTAssertNil(Geo.elevationGain(segments: [[p(0, 0, ele: .nan), p(0, 0, ele: -.infinity)]]))
     }
 
     func testTimeSpanFirstToLast() {
@@ -62,6 +78,7 @@ final class GeoTests: XCTestCase {
         let b = p(0, 0)
         var c = p(0, 0); c.time = t0.addingTimeInterval(3_600)
         XCTAssertEqual(Geo.timeSpan(segments: [[a, b], [c]]), 3_600)
+        // breaks-if: timeSpan drops its `times.count > 1` guard and returns 0 for a single timestamp.
         XCTAssertNil(Geo.timeSpan(segments: [[a, b]]))
     }
 
@@ -80,6 +97,7 @@ final class GeoTests: XCTestCase {
         XCTAssertEqual(box.lonSpan, 180)
     }
 
+    // breaks-if: BoundingBox.init(points:) stops returning nil for an empty array.
     func testEmptyBoundingBoxIsNil() {
         XCTAssertNil(BoundingBox(points: []))
     }

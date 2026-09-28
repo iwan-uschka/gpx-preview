@@ -29,10 +29,10 @@ enum PreviewLayout {
         var parts = ["\(grouped(doc.pointCount)) point\(doc.pointCount == 1 ? "" : "s")"]
         let distance = Geo.distance(segments: segments)
         if distance > 0 { parts.append(TrackRenderer.formatDistance(distance)) }
-        if let gain = Geo.elevationGain(segments: doc.trackSegments) {
+        if let gain = Geo.elevationGain(segments: segments) {
             parts.append(String(format: "↑ %.0f m", gain))
         }
-        if let span = Geo.timeSpan(segments: doc.trackSegments), span > 0 {
+        if let span = Geo.timeSpan(segments: segments), span > 0 {
             parts.append(formatDuration(span))
         }
         parts.append(contentsOf: notes(doc))
@@ -97,8 +97,9 @@ enum PreviewLayout {
         let contentWidth = width - 2 * margin
         var b: [Block] = [.title(doc.title), .gap(8), .plot]
         let notes = notes(doc)
-        b.append(notes.isEmpty ? .gap(8) : .note(notes.joined(separator: " · ")))
-        b.append(.line(statsLine(doc), bodyFont, textColor))
+        // Single line each, ellipsised rather than running past the right margin.
+        b.append(notes.isEmpty ? .gap(8) : .note(oneLine(notes.joined(separator: " · "), width: contentWidth, font: smallFont)))
+        b.append(.line(oneLine(statsLine(doc), width: contentWidth, font: bodyFont), bodyFont, textColor))
         if !doc.keywords.isEmpty {
             b.append(.gap(6))
             b.append(.keywords(keywordRows(doc.keywords, width: contentWidth)))
@@ -117,11 +118,15 @@ enum PreviewLayout {
         return b
     }
 
+    private static func oneLine(_ s: String, width: CGFloat, font: CTFont) -> String {
+        TextDrawing.wrap(s, width: width, font: font, maxLines: 1).first ?? s
+    }
+
     private static func keywordRows(_ keywords: [String], width: CGFloat) -> [[String]] {
         var rows: [[String]] = [[]]
         var x: CGFloat = 0
         for k in keywords {
-            let w = TextDrawing.width(k, font: keywordFont) + 16
+            let w = min(TextDrawing.width(k, font: keywordFont) + 16, width)
             if x + w > width, !(rows.last?.isEmpty ?? true) { rows.append([]); x = 0 }
             rows[rows.count - 1].append(k)
             x += w + 6
@@ -193,13 +198,18 @@ enum PreviewLayout {
         for row in rows {
             var x = rect.minX
             for k in row {
-                let w = TextDrawing.width(k, font: keywordFont) + 16
+                // Same cap as keywordRows: an over-long keyword gets a full-width pill.
+                let w = min(TextDrawing.width(k, font: keywordFont) + 16, rect.width)
                 let pill = CGRect(x: x, y: y, width: w, height: 18)
                 ctx.addPath(CGPath(roundedRect: pill, cornerWidth: 9, cornerHeight: 9, transform: nil))
                 ctx.setFillColor(CGColor(gray: 0.92, alpha: 1))
                 ctx.fillPath()
+                // Clip the label to the pill's padded interior so it can't paint past the card edge.
+                ctx.saveGState()
+                ctx.clip(to: pill.insetBy(dx: 8, dy: 0))
                 TextDrawing.draw(k, at: CGPoint(x: x + 8, y: y + 5), font: keywordFont,
                                  color: textColor, in: ctx)
+                ctx.restoreGState()
                 x += w + 6
             }
             y -= 22
